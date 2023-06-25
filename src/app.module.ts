@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { RolesModule } from './roles/roles.module';
 import { Role } from "./roles/model/roles.model";
 import { Relationship } from "./roles/model/relationship.model";
+import { FriendRequestsModule } from './friend_requests/friend_requests.module';
+import { FriendRequest } from "./friend_requests/model/friend_requests.model";
 
 @Module({
     imports: [
@@ -21,13 +23,14 @@ import { Relationship } from "./roles/model/relationship.model";
             username: process.env.POSTGRES_USER,
             password: process.env.POSTGRES_PASSWORD,
             database: process.env.POSTGRES_DB,
-            models: [Account, DataAboutAccount, Role, Relationship],
+            models: [Account, DataAboutAccount, Role, Relationship, FriendRequest],
             autoLoadModels: true,
             synchronize: true
         }),
         AccountsModule,
         AuthModule,
         RolesModule,
+        FriendRequestsModule,
     ],
     controllers: [],
     providers: []

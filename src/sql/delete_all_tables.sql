@@ -1,0 +1,1 @@
+DROP TABLE accounts, data_about_accounts, relationship, roles, friend_requests;

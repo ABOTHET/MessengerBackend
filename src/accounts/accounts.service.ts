@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Account } from "./model/accounts.model";
 import { AccountDto } from "./dto/accounts.dto";
-import { AccountIsBusy } from "../exceptions/account_is_busy";
+import { AccountIsBusy } from "../exceptions/accounts/account_is_busy";
 import * as bcrypt from "bcrypt";
 import { DataAboutAccount } from "./model/data_about_accounts.model";
 import { RolesService } from "../roles/roles.service";
@@ -11,7 +11,7 @@ import { RolesService } from "../roles/roles.service";
 export class AccountsService {
     constructor(@InjectModel(Account) private accountModel: typeof Account,
                 @InjectModel(DataAboutAccount) private dataAboutAccount: typeof DataAboutAccount,
-                private rolesService: RolesService) {
+                @Inject(forwardRef(() => RolesService)) private rolesService: RolesService) {
     }
     async getAccountById(id: number) {
         const account = await this.accountModel.findByPk(id, {include: {all: true}});
@@ -34,7 +34,7 @@ export class AccountsService {
         const newDto = {...dto, password: hashPassword};
         const newAccount = await Account.create(newDto);
         await this.createDataAboutAccount(newAccount.id);
-        await this.rolesService.assignARole(newAccount.id, "User");
+        await this.rolesService.assignARole(newAccount.phone, "User");
     }
     private async createDataAboutAccount(idAccount: number) {
         await this.dataAboutAccount.create({ idAccount: idAccount })

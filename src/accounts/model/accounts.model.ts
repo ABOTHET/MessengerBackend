@@ -2,6 +2,7 @@ import { Column, Model, Table, DataType, HasOne, HasMany } from "sequelize-types
 import { Optional } from 'sequelize';
 import { DataAboutAccount } from "./data_about_accounts.model";
 import { Relationship } from "../../roles/model/relationship.model";
+import { FriendRequest } from "../../friend_requests/model/friend_requests.model";
 
 interface AccountAttributes {
     phone: string;
@@ -21,5 +22,7 @@ export class Account extends Model<AccountAttributes, AccountCreationAttributes>
     @HasOne(() => DataAboutAccount)
     dataAboutAccount: DataAboutAccount;
     @HasMany(() => Relationship)
-    relationship: Relationship;
+    relationship: Relationship[];
+    @HasMany(() => FriendRequest)
+    friendRequests: FriendRequest[];
 }

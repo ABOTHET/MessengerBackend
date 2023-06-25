@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { AccountsService } from "../accounts/accounts.service";
 import { AccountDto } from "../accounts/dto/accounts.dto";
-import { TheAccountDoesNotExist } from "../exceptions/the_account_does_not_exist";
+import { TheAccountDoesNotExist } from "../exceptions/accounts/the_account_does_not_exist";
 import * as bcrypt from "bcrypt";
 import { Account } from "../accounts/model/accounts.model";
-import { IncorrectData } from "../exceptions/incorrect_data";
+import { IncorrectData } from "../exceptions/accounts/incorrect_data";
 
 @Injectable()
 export class AuthService {

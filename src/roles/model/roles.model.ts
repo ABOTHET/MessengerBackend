@@ -1,4 +1,4 @@
-import { Column, Model, Table, DataType, HasOne, HasMany } from "sequelize-typescript";
+import { Column, Model, Table, DataType, HasOne, HasMany, BelongsTo } from "sequelize-typescript";
 import { Optional } from 'sequelize';
 import { Relationship } from "./relationship.model";
 
@@ -18,5 +18,5 @@ export class Role extends Model<RoleAttributes, RoleCreationAttributes> {
     @Column({allowNull: false, type: DataType.STRING})
     description: string;
     @HasMany(() => Relationship)
-    relationship: Relationship;
+    relationship: Relationship[];
 }
