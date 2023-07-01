@@ -1,0 +1,1 @@
+DROP TABLE accounts, data_about_accounts, refresh_tokens;

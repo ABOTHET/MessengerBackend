@@ -1,43 +1,52 @@
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import { CreateAccountDto } from "./dto/createAccount.dto";
 import { InjectModel } from "@nestjs/sequelize";
 import { Account } from "./model/accounts.model";
-import { AccountDto } from "./dto/accounts.dto";
-import { AccountIsBusy } from "../exceptions/accounts/account_is_busy";
+import { AccountIsBusy } from "./exceptions/accountIsBusy";
+import { DataAboutAccount } from "./model/dataAboutAccounts.model";
+import { TheAccountDoesNotExist } from "./exceptions/theAccountDoesNotExist";
 import * as bcrypt from "bcrypt";
-import { DataAboutAccount } from "./model/data_about_accounts.model";
-import { RolesService } from "../roles/roles.service";
+import { AuthService } from "../auth/auth.service";
 
 @Injectable()
 export class AccountsService {
-    constructor(@InjectModel(Account) private accountModel: typeof Account,
-                @InjectModel(DataAboutAccount) private dataAboutAccount: typeof DataAboutAccount,
-                @Inject(forwardRef(() => RolesService)) private rolesService: RolesService) {
+
+    constructor(@InjectModel(Account) private accountsRepository: typeof Account,
+                @InjectModel(DataAboutAccount) private dataAboutAccountsRepository: typeof DataAboutAccount,
+                @Inject(forwardRef(() => AuthService)) private authService: AuthService) {
     }
-    async getAccountById(id: number) {
-        const account = await this.accountModel.findByPk(id, {include: {all: true}});
-        return account;
-    }
-    async getAccountByPhone(phone: string) {
-        const account = await this.accountModel.findOne({where: {phone: phone}, include: {all: true}});
-        return account;
-    }
-    async getAccounts() {
-        const accounts = await this.accountModel.findAll({include: {all: true}});
-        return accounts;
-    }
-    async createAccount(dto: AccountDto) {
-        const account = await this.getAccountByPhone(dto.phone);
+
+    async createAccount(accountDto: CreateAccountDto) {
+        const account = await this.accountsRepository
+            .findOne({where: {phone: accountDto.phone}});
         if (account) {
             throw new AccountIsBusy();
         }
-        const hashPassword = await bcrypt.hash(dto.password, 3);
-        const newDto = {...dto, password: hashPassword};
-        const newAccount = await Account.create(newDto);
-        await this.createDataAboutAccount(newAccount.id);
-        await this.rolesService.assignARole(newAccount.phone, "User");
+        const hashPassword = await bcrypt.hash(accountDto.password, 3);
+        const createdAccount = await this.accountsRepository.create({...accountDto, password: hashPassword});
+        const dataAboutAccount = await this.dataAboutAccountsRepository
+            .create({idAccount: createdAccount.id});
+        const tokens = await this.authService.generateTokens(createdAccount);
+        await this.authService.saveRefreshTokenById(createdAccount.id, tokens.refreshToken);
+        return tokens;
     }
-    private async createDataAboutAccount(idAccount: number) {
-        await this.dataAboutAccount.create({ idAccount: idAccount })
+
+    async getAccountByPhone(phone: string) {
+        const account = await this.accountsRepository
+            .findOne({where: {phone: phone}, include: {all: true}});
+        if (!account) {
+            throw new TheAccountDoesNotExist();
+        }
+        return account;
+    }
+
+    async getAccountById(id: number) {
+        const account = await this.accountsRepository
+            .findByPk(id, {include: {all: true}});
+        if (!account) {
+            throw new TheAccountDoesNotExist();
+        }
+        return account;
     }
 
 }

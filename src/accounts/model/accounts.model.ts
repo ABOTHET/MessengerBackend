@@ -1,28 +1,32 @@
-import { Column, Model, Table, DataType, HasOne, HasMany } from "sequelize-typescript";
-import { Optional } from 'sequelize';
-import { DataAboutAccount } from "./data_about_accounts.model";
-import { Relationship } from "../../roles/model/relationship.model";
-import { FriendRequest } from "../../friend_requests/model/friend_requests.model";
+import { AutoIncrement, Column, DataType, HasOne, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { DataAboutAccount } from "./dataAboutAccounts.model";
+import { ApiProperty } from "@nestjs/swagger";
+import { RefreshToken } from "../../auth/model/refreshTokens.model";
 
-interface AccountAttributes {
+interface AccountCreationAttributes {
     phone: string;
     password: string;
 }
-
-interface AccountCreationAttributes extends Optional<AccountAttributes, 'phone'> {}
-
-@Table({tableName: "accounts", deletedAt: false, updatedAt: false, createdAt: false})
-export class Account extends Model<AccountAttributes, AccountCreationAttributes> {
-    @Column({autoIncrement: true, primaryKey: true, allowNull: false, type: DataType.INTEGER})
+@Table({tableName: "accounts", createdAt: false, deletedAt: false, updatedAt: false})
+export class Account extends Model<Account, AccountCreationAttributes> {
+    @ApiProperty({example: "1", description: "id аккаунта"})
+    @Column({type: DataType.INTEGER, autoIncrement: true, primaryKey: true, unique: true})
     id: number;
-    @Column({allowNull: false, unique: true, type: DataType.STRING})
+    @ApiProperty({example: "1", description: "Телефон"})
+    @Column({type: DataType.STRING, allowNull: false})
     phone: string;
-    @Column({allowNull: false, type: DataType.STRING})
+    @ApiProperty({example: "hQe2C1", description: "Пароль"})
+    @Column({type: DataType.STRING, allowNull: false})
     password: string;
+    @ApiProperty({example: {
+            id: 1,
+            idAccount: 1,
+            name: "Валерий",
+            surname: "Лёвин",
+            age: 21
+        }, description: "Данные аккаунта"})
     @HasOne(() => DataAboutAccount)
     dataAboutAccount: DataAboutAccount;
-    @HasMany(() => Relationship)
-    relationship: Relationship[];
-    @HasMany(() => FriendRequest)
-    friendRequests: FriendRequest[];
+    @HasOne(() => RefreshToken)
+    refreshToken: RefreshToken;
 }

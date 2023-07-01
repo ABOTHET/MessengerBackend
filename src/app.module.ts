@@ -1,15 +1,12 @@
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { SequelizeModule } from "@nestjs/sequelize";
-import { AccountsModule } from './accounts/accounts.module';
+import { AccountsModule } from "./accounts/accounts.module";
 import { Account } from "./accounts/model/accounts.model";
-import { DataAboutAccount } from "./accounts/model/data_about_accounts.model";
-import { AuthModule } from './auth/auth.module';
-import { RolesModule } from './roles/roles.module';
-import { Role } from "./roles/model/roles.model";
-import { Relationship } from "./roles/model/relationship.model";
-import { FriendRequestsModule } from './friend_requests/friend_requests.module';
-import { FriendRequest } from "./friend_requests/model/friend_requests.model";
+import { DataAboutAccount } from "./accounts/model/dataAboutAccounts.model";
+import { AuthModule } from "./auth/auth.module";
+import { RefreshToken } from "./auth/model/refreshTokens.model";
+import { AuthMiddleware } from "./middleware/auth.middleware";
 
 @Module({
     imports: [
@@ -23,17 +20,20 @@ import { FriendRequest } from "./friend_requests/model/friend_requests.model";
             username: process.env.POSTGRES_USER,
             password: process.env.POSTGRES_PASSWORD,
             database: process.env.POSTGRES_DB,
-            models: [Account, DataAboutAccount, Role, Relationship, FriendRequest],
+            models: [Account, DataAboutAccount, RefreshToken],
             autoLoadModels: true,
             synchronize: true
         }),
         AccountsModule,
-        AuthModule,
-        RolesModule,
-        FriendRequestsModule,
+        AuthModule
     ],
     controllers: [],
     providers: []
 })
-export class AppModule {
+export class AppModule implements NestModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(AuthMiddleware)
+            .forRoutes({path: "/accounts/*", method: RequestMethod.GET});
+    }
 }
