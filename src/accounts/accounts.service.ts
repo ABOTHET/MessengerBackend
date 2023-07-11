@@ -49,4 +49,9 @@ export class AccountsService {
         return account;
     }
 
+    async getDataAboutAccountById(id: number) {
+        const dataAboutAccount = await this.dataAboutAccountsRepository.findOne({where: {idAccount: id}});
+        return dataAboutAccount;
+    }
+
 }

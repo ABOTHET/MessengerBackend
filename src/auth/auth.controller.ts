@@ -17,10 +17,7 @@ export class AuthController {
     async login(@Res({ passthrough: true }) res: Response, @Body() accountDto: CreateAccountDto) {
         const tokens = await this.authService.login(accountDto);
         res.cookie('refreshToken', tokens.refreshToken, {maxAge: 60 * 24 * 60 * 60, httpOnly: true});
-        return {
-            message: "Вход был успешно выполнен",
-            ...tokens
-        }
+        return tokens
     }
 
     @ApiOperation({summary: "Выйти из аккаунта"})

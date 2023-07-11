@@ -6,7 +6,7 @@ import { AuthService } from "../auth/auth.service";
 export class AuthMiddleware implements NestMiddleware {
     constructor(private authService: AuthService) {
     }
-    async use(req: Request, res: Response, next: NextFunction) {
+    async use(req, res: Response, next: NextFunction) {
         const bearer = req.headers.authorization?.split(" ")[0];
         const accessToken = req.headers.authorization?.split(" ")[1];
         if (bearer !== "Bearer" || !accessToken) {

@@ -7,6 +7,12 @@ async function bootstrap() {
     const PORT = process.env.PORT || 5000;
     const app = await NestFactory.create(AppModule);
     app.use(cookieParser());
+    app.enableCors({
+        origin: true,
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        allowedHeaders: 'Content-Type, Accept, Authorization',
+        credentials: true
+    });
     const config = new DocumentBuilder()
         .setTitle("Messenger")
         .setDescription("Документация по соц. сети Messenger")

@@ -1,7 +1,8 @@
-import { AutoIncrement, Column, DataType, HasOne, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { AutoIncrement, Column, DataType, HasMany, HasOne, Model, PrimaryKey, Table } from "sequelize-typescript";
 import { DataAboutAccount } from "./dataAboutAccounts.model";
 import { ApiProperty } from "@nestjs/swagger";
 import { RefreshToken } from "../../auth/model/refreshTokens.model";
+import { Post } from "../../posts/model/posts.model";
 
 interface AccountCreationAttributes {
     phone: string;
@@ -29,4 +30,6 @@ export class Account extends Model<Account, AccountCreationAttributes> {
     dataAboutAccount: DataAboutAccount;
     @HasOne(() => RefreshToken)
     refreshToken: RefreshToken;
+    @HasMany(() => Post)
+    posts: Post[];
 }

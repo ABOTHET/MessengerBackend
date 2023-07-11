@@ -1,1 +1,1 @@
-DROP TABLE accounts, data_about_accounts, refresh_tokens;
+DROP TABLE accounts, data_about_accounts, refresh_tokens, posts;

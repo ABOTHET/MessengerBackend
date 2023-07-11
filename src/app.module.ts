@@ -7,6 +7,8 @@ import { DataAboutAccount } from "./accounts/model/dataAboutAccounts.model";
 import { AuthModule } from "./auth/auth.module";
 import { RefreshToken } from "./auth/model/refreshTokens.model";
 import { AuthMiddleware } from "./middleware/auth.middleware";
+import { PostsModule } from "./posts/posts.module";
+import { Post } from "./posts/model/posts.model";
 
 @Module({
     imports: [
@@ -20,12 +22,13 @@ import { AuthMiddleware } from "./middleware/auth.middleware";
             username: process.env.POSTGRES_USER,
             password: process.env.POSTGRES_PASSWORD,
             database: process.env.POSTGRES_DB,
-            models: [Account, DataAboutAccount, RefreshToken],
+            models: [Account, DataAboutAccount, RefreshToken, Post],
             autoLoadModels: true,
             synchronize: true
         }),
         AccountsModule,
-        AuthModule
+        AuthModule,
+        PostsModule
     ],
     controllers: [],
     providers: []
@@ -34,6 +37,6 @@ export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(AuthMiddleware)
-            .forRoutes({path: "/accounts/*", method: RequestMethod.GET});
+            .forRoutes({ path: '/accounts/*', method: RequestMethod.ALL })
     }
 }
