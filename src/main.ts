@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import * as fs from "fs";
 
 async function bootstrap() {
     const PORT = process.env.PORT || 5000;

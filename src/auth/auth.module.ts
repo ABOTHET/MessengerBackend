@@ -1,15 +1,13 @@
 import { forwardRef, Module } from "@nestjs/common";
-import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
 import { AccountsModule } from "../accounts/accounts.module";
-import { JwtModule } from "@nestjs/jwt";
-import { SequelizeModule } from "@nestjs/sequelize";
-import { RefreshToken } from "./model/refreshTokens.model";
+import { RefreshTokensModule } from "../refresh_tokens/refresh_tokens.module";
 
 @Module({
-  controllers: [AuthController],
   providers: [AuthService],
-  imports: [forwardRef(() => AccountsModule), JwtModule, SequelizeModule.forFeature([RefreshToken])],
+  controllers: [AuthController],
+  imports: [forwardRef(() => AccountsModule), RefreshTokensModule],
   exports: [AuthService]
 })
 export class AuthModule {}

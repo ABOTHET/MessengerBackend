@@ -1,57 +1,53 @@
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { CreateAccountDto } from "./dto/createAccount.dto";
 import { InjectModel } from "@nestjs/sequelize";
-import { Account } from "./model/accounts.model";
-import { AccountIsBusy } from "./exceptions/accountIsBusy";
-import { DataAboutAccount } from "./model/dataAboutAccounts.model";
-import { TheAccountDoesNotExist } from "./exceptions/theAccountDoesNotExist";
+import { Account } from "./models/accounts.model";
 import * as bcrypt from "bcrypt";
+import { ThePhoneIsAlreadyBusy } from "../exceptions/The_phone_is_already_busy";
 import { AuthService } from "../auth/auth.service";
+import { RefreshTokensService } from "../refresh_tokens/refresh_tokens.service";
+import { ICreateAccountDto } from "./dto/create_account.dto";
+import { DataAboutAccountsService } from "../data_about_accounts/data_about_accounts.service";
+import * as fs from "fs";
 
 @Injectable()
 export class AccountsService {
 
-    constructor(@InjectModel(Account) private accountsRepository: typeof Account,
-                @InjectModel(DataAboutAccount) private dataAboutAccountsRepository: typeof DataAboutAccount,
-                @Inject(forwardRef(() => AuthService)) private authService: AuthService) {
+    cities;
+
+    constructor(@InjectModel(Account) private accountRepository: typeof Account,
+                @Inject(forwardRef(() => AuthService)) private authService: AuthService,
+                @Inject(forwardRef(() => RefreshTokensService)) private refreshTokensService: RefreshTokensService,
+                @Inject(forwardRef(() => DataAboutAccountsService)) private dataAboutAccountsService: DataAboutAccountsService) {}
+
+    async getCityById(id: number) {
+        if (!this.cities) {
+            const data = await fs.promises.readFile(`./src/assets/cities.json`, "utf-8");
+            this.cities = JSON.parse(Buffer.from(data).toString("utf8"));
+        }
+        return this.cities[id];
     }
 
-    async createAccount(accountDto: CreateAccountDto) {
-        const account = await this.accountsRepository
-            .findOne({where: {phone: accountDto.phone}});
-        if (account) {
-            throw new AccountIsBusy();
+    async createAccount(createAccount: ICreateAccountDto) {
+        const accountFromDB = await this.getAccountByPhone(createAccount.phone);
+        if (accountFromDB) {
+            throw new ThePhoneIsAlreadyBusy();
         }
-        const hashPassword = await bcrypt.hash(accountDto.password, 3);
-        const createdAccount = await this.accountsRepository.create({...accountDto, password: hashPassword});
-        const dataAboutAccount = await this.dataAboutAccountsRepository
-            .create({idAccount: createdAccount.id});
-        const tokens = await this.authService.generateTokens(createdAccount);
-        await this.authService.saveRefreshTokenById(createdAccount.id, tokens.refreshToken);
+        const hashPassword = await bcrypt.hash(createAccount.password, 3);
+        const changeData = { ...createAccount, password: hashPassword };
+        const newAccount = await this.accountRepository.create(changeData);
+        const tokens = await this.refreshTokensService.generateTokens(newAccount);
+        await this.refreshTokensService
+            .saveRefreshToken({ account_id: newAccount.id, refresh_token: tokens.refresh_token });
+        await this.dataAboutAccountsService.createDataAboutAccount(newAccount.id);
         return tokens;
     }
 
-    async getAccountByPhone(phone: string) {
-        const account = await this.accountsRepository
-            .findOne({where: {phone: phone}, include: {all: true}});
-        if (!account) {
-            throw new TheAccountDoesNotExist();
-        }
-        return account;
-    }
-
     async getAccountById(id: number) {
-        const account = await this.accountsRepository
-            .findByPk(id, {include: {all: true}});
-        if (!account) {
-            throw new TheAccountDoesNotExist();
-        }
-        return account;
+        return await this.accountRepository.findByPk(id);
     }
 
-    async getDataAboutAccountById(id: number) {
-        const dataAboutAccount = await this.dataAboutAccountsRepository.findOne({where: {idAccount: id}});
-        return dataAboutAccount;
+    async getAccountByPhone(phone: string) {
+        return await this.accountRepository.findOne({ where: { phone: phone }, include: { all: true } });
     }
 
 }

@@ -1,41 +1,36 @@
-import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
+import { Body, Controller, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
-import { CreateAccountDto } from "../accounts/dto/createAccount.dto";
-import { ApiOperation, ApiResponse } from "@nestjs/swagger";
-import { Response, Request } from "express";
-import { Tokens } from "../accounts/accounts.controller";
+import { Request, Response } from "express";
+import { ICreateAccountDto } from "../accounts/dto/create_account.dto";
+import { AuthGuard } from "../guards/auth/auth.guard";
 
 @Controller('auth')
 export class AuthController {
 
-    constructor(private authService: AuthService) {
+    constructor(private authService: AuthService) {}
+
+    @Post('login')
+    async login(@Res({ passthrough: true }) res: Response, @Body() createAccount: ICreateAccountDto) {
+        const tokens = await this.authService.login(createAccount);
+        res.cookie('refreshToken', tokens.refresh_token, {maxAge: 60 * 24 * 60 * 60, httpOnly: true});
+        return {
+            id: tokens.id,
+            access_token: tokens.access_token
+        }
     }
 
-    @ApiOperation({summary: "Войти в аккаунт"})
-    @ApiResponse({status: 200, type: Tokens})
-    @Post("/login")
-    async login(@Res({ passthrough: true }) res: Response, @Body() accountDto: CreateAccountDto) {
-        const tokens = await this.authService.login(accountDto);
-        res.cookie('refreshToken', tokens.refreshToken, {maxAge: 60 * 24 * 60 * 60, httpOnly: true});
-        return tokens
-    }
-
-    @ApiOperation({summary: "Выйти из аккаунта"})
-    @ApiResponse({status: 200})
-    @Post("/logout")
+    @UseGuards(AuthGuard)
+    @Post("logout")
     async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         await this.authService.logout(req.cookies.refreshToken);
         res.clearCookie('refreshToken');
-        return "Выход был выполнен";
     }
 
-    @ApiOperation({summary: "Обновить refreshToken"})
-    @ApiResponse({status: 200, type: Tokens})
-    @Post("/refresh")
+    @UseGuards(AuthGuard)
+    @Post("refresh")
     async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         const tokens = await this.authService.refresh(req.cookies.refreshToken);
-        res.cookie('refreshToken', tokens.refreshToken, {maxAge: 60 * 24 * 60 * 60, httpOnly: true});
-        return tokens;
+        res.cookie('refreshToken', tokens.refresh_token, {maxAge: 60 * 24 * 60 * 60, httpOnly: true});
     }
 
 }

@@ -1,97 +1,37 @@
 import { forwardRef, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
-import { CreateAccountDto } from "../accounts/dto/createAccount.dto";
 import { AccountsService } from "../accounts/accounts.service";
-import * as bcrypt from "bcrypt"
-import { InvalidAccountData } from "../accounts/exceptions/invalidAccountData";
-import { JwtService } from "@nestjs/jwt";
-import { Account } from "../accounts/model/accounts.model";
-import * as process from "process";
-import { Payload } from "./payload/payload";
-import { InjectModel } from "@nestjs/sequelize";
-import { RefreshToken } from "./model/refreshTokens.model";
+import { TheAccountDoesNotExist } from "../exceptions/The_account_does_not_exist";
+import { InvalidPassword } from "../exceptions/Invalid_password";
+import * as bcrypt from "bcrypt";
+import { RefreshTokensService } from "../refresh_tokens/refresh_tokens.service";
+import { ICreateAccountDto } from "../accounts/dto/create_account.dto";
 
 @Injectable()
 export class AuthService {
 
-    constructor(@Inject(forwardRef(() => AccountsService)) private accountService: AccountsService,
-                private jwtService: JwtService,
-                @InjectModel(RefreshToken) private refreshTokenRepository: typeof RefreshToken) {
-    }
+    constructor(@Inject(forwardRef(() => AccountsService)) private accountsService: AccountsService, private refreshTokensService: RefreshTokensService) {}
 
-    async login(accountDto: CreateAccountDto) {
-        const account = await this.accountService.getAccountByPhone(accountDto.phone);
-        const passwordComparison = await bcrypt.compare(accountDto.password, account.password);
-        if (!passwordComparison) {
-            throw new InvalidAccountData();
+    async login(createAccount: ICreateAccountDto) {
+        const account = await this.accountsService.getAccountByPhone(createAccount.phone);
+        if (!account) {
+            throw new TheAccountDoesNotExist();
         }
-        const tokens = await this.generateTokens(account);
-        await this.saveRefreshTokenById(account.id, tokens.refreshToken);
+        const validatePassword = await bcrypt.compare(createAccount.password, account.password);
+        if (!validatePassword) {
+            throw new InvalidPassword();
+        }
+        const tokens = await this.refreshTokensService.generateTokens(account);
+        await this.refreshTokensService
+            .saveRefreshToken({account_id: account.id, refresh_token: tokens.refresh_token});
         return tokens;
     }
 
-    async logout(refreshToken: string) {
-        await this.refreshTokenRepository.destroy({where: {refreshToken: refreshToken}});
+    async logout(refresh_token: string) {
+        await this.refreshTokensService.logout(refresh_token);
     }
 
-    async generateTokens(account: Account) {
-        const payload = Payload.getPayload(account);
-        const tokens = {
-            accessToken: await this.jwtService.signAsync(payload, {
-                secret: process.env.PRIVATE_KEY,
-                expiresIn: process.env.EXPIRESIN_ACCESS
-            }),
-            refreshToken: await this.jwtService.signAsync(payload, {
-                secret: process.env.PRIVATE_KEY_REFR,
-                expiresIn: process.env.EXPIRESIN_REFRESH
-            })
-        }
-        return tokens;
+    async refresh(refresh_token: string) {
+        return await this.refreshTokensService.refresh(refresh_token);
     }
 
-    async saveRefreshTokenById(idAccount: number, refreshToken: string) {
-        const token = await this.refreshTokenRepository
-            .findOne({where: {idAccount: idAccount}});
-        if (token) {
-            token.refreshToken = refreshToken;
-            await token.save();
-            return true;
-        }
-        await this.refreshTokenRepository.create({idAccount, refreshToken});
-        return true;
-    }
-
-    async validateAccessToken(accessToken: string) {
-        try {
-            const token = await this.jwtService.verifyAsync(accessToken, {
-                secret: process.env.PRIVATE_KEY
-            })
-            return token;
-        } catch (e) {
-            return null;
-        }
-    }
-
-    private async validateRefreshToken(refreshToken: string) {
-        try {
-            const token = await this.jwtService.verifyAsync(refreshToken, {
-                secret: process.env.PRIVATE_KEY_REFR
-            })
-            return token;
-        } catch (e) {
-            return null;
-        }
-    }
-
-    async refresh(refreshToken: string) {
-        const token = await this.validateRefreshToken(refreshToken);
-        const tokenFromDB = await this.refreshTokenRepository
-            .findOne({where: {refreshToken: refreshToken}});
-        if (token && tokenFromDB) {
-            const account = await this.accountService.getAccountById(token.id);
-            const tokens = await this.generateTokens(account);
-            await this.saveRefreshTokenById(account.id, tokens.refreshToken);
-            return tokens;
-        }
-        throw new UnauthorizedException("Вы не авторизованы");
-    }
 }

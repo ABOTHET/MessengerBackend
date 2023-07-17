@@ -1,19 +1,19 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { AccountsModule } from './accounts/accounts.module';
 import { SequelizeModule } from "@nestjs/sequelize";
-import { AccountsModule } from "./accounts/accounts.module";
-import { Account } from "./accounts/model/accounts.model";
-import { DataAboutAccount } from "./accounts/model/dataAboutAccounts.model";
-import { AuthModule } from "./auth/auth.module";
-import { RefreshToken } from "./auth/model/refreshTokens.model";
-import { AuthMiddleware } from "./middleware/auth.middleware";
-import { PostsModule } from "./posts/posts.module";
-import { Post } from "./posts/model/posts.model";
+import { Account } from "./accounts/models/accounts.model";
+import { RefreshTokensModule } from './refresh_tokens/refresh_tokens.module';
+import { RefreshToken } from "./refresh_tokens/models/refresh_tokens.model";
+import { AuthModule } from './auth/auth.module';
+import { DataAboutAccountsModule } from './data_about_accounts/data_about_accounts.module';
+import { DataAboutAccount } from "./data_about_accounts/models/data_about_accounts.model";
 
 @Module({
     imports: [
         ConfigModule.forRoot({
-            envFilePath: `.env`
+            envFilePath: `.env`,
+            isGlobal: true,
         }),
         SequelizeModule.forRoot({
             dialect: "postgres",
@@ -22,21 +22,18 @@ import { Post } from "./posts/model/posts.model";
             username: process.env.POSTGRES_USER,
             password: process.env.POSTGRES_PASSWORD,
             database: process.env.POSTGRES_DB,
-            models: [Account, DataAboutAccount, RefreshToken, Post],
+            models: [Account, RefreshToken, DataAboutAccount],
             autoLoadModels: true,
             synchronize: true
         }),
         AccountsModule,
+        RefreshTokensModule,
         AuthModule,
-        PostsModule
+        DataAboutAccountsModule,
     ],
     controllers: [],
     providers: []
 })
-export class AppModule implements NestModule {
-    configure(consumer: MiddlewareConsumer) {
-        consumer
-            .apply(AuthMiddleware)
-            .forRoutes({ path: '/accounts/*', method: RequestMethod.ALL })
-    }
+export class AppModule {
+
 }
