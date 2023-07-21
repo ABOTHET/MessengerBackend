@@ -3,7 +3,7 @@ import { InjectModel } from "@nestjs/sequelize";
 import { RefreshToken } from "./models/refresh_tokens.model";
 import { JwtService } from "@nestjs/jwt";
 import { Account } from "../accounts/models/accounts.model";
-import { Payload } from "./payload/payload";
+import { PayloadToken } from "./payload/payload_token";
 import { ICreateRefreshTokenDto } from "./dto/create_refresh_token.dto";
 import { AccountsService } from "../accounts/accounts.service";
 import { env } from "process";
@@ -38,7 +38,7 @@ export class RefreshTokensService {
     }
 
     async generateTokens(account: Account) {
-        const payload = {...new Payload(account)};
+        const payload = {...new PayloadToken(account)};
         const tokens = {
             access_token: await this.jwtService.signAsync(payload, {
                 secret: env["PRIVATE_KEY"],

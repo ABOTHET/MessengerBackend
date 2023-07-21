@@ -3,6 +3,7 @@ import { AppModule } from "./app.module";
 import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import * as fs from "fs";
+import { RolesGuard } from "./guards/roles/roles.guard";
 
 async function bootstrap() {
     const PORT = process.env.PORT || 5000;

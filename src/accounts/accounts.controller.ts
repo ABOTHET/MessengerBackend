@@ -31,7 +31,7 @@ export class AccountsController {
     @UseGuards(AuthGuard)
     @Post("/:id")
     async changeDataAboutAccount(@Req() req, @Body() dataAboutAccount: IChangeDataAboutAccount) {
-        await this.dataAboutAccountsService.changeDataAboutAccount(req.idAccount, dataAboutAccount);
+        await this.dataAboutAccountsService.changeDataAboutAccount(req.tokenAccess.id, dataAboutAccount);
     }
 
 }

@@ -17,7 +17,7 @@ export class AuthGuard implements CanActivate {
     if (!valid) {
       throw new UnauthorizedException("Вы не авторизованы");
     }
-    request.idAccount = valid.id;
+    request.tokenAccess = valid;
     return true;
   }
 

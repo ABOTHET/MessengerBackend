@@ -8,6 +8,7 @@ import { RefreshTokensService } from "../refresh_tokens/refresh_tokens.service";
 import { ICreateAccountDto } from "./dto/create_account.dto";
 import { DataAboutAccountsService } from "../data_about_accounts/data_about_accounts.service";
 import * as fs from "fs";
+import { RolesService } from "../roles/roles.service";
 
 @Injectable()
 export class AccountsService {
@@ -17,7 +18,8 @@ export class AccountsService {
     constructor(@InjectModel(Account) private accountRepository: typeof Account,
                 @Inject(forwardRef(() => AuthService)) private authService: AuthService,
                 @Inject(forwardRef(() => RefreshTokensService)) private refreshTokensService: RefreshTokensService,
-                @Inject(forwardRef(() => DataAboutAccountsService)) private dataAboutAccountsService: DataAboutAccountsService) {}
+                @Inject(forwardRef(() => DataAboutAccountsService)) private dataAboutAccountsService: DataAboutAccountsService,
+                @Inject(forwardRef(() => RolesService)) private rolesService: RolesService) {}
 
     async getCityById(id: number) {
         if (!this.cities) {
@@ -39,11 +41,12 @@ export class AccountsService {
         await this.refreshTokensService
             .saveRefreshToken({ account_id: newAccount.id, refresh_token: tokens.refresh_token });
         await this.dataAboutAccountsService.createDataAboutAccount(newAccount.id);
+        await this.rolesService.setRole({role: "User", account_id: newAccount.id});
         return tokens;
     }
 
     async getAccountById(id: number) {
-        return await this.accountRepository.findByPk(id);
+        return await this.accountRepository.findByPk(id, {include: {all: true}});
     }
 
     async getAccountByPhone(phone: string) {

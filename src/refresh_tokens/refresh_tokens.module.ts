@@ -9,7 +9,7 @@ import { RefreshToken } from "./models/refresh_tokens.model";
     providers: [RefreshTokensService],
     imports: [SequelizeModule.forFeature([RefreshToken]),
         JwtModule,
-        forwardRef(() => AccountsModule)],
+        forwardRef(() => AccountsModule),],
     exports: [RefreshTokensService]
 })
 export class RefreshTokensModule {}

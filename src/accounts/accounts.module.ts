@@ -6,12 +6,14 @@ import { Account } from "./models/accounts.model";
 import { AuthModule } from "../auth/auth.module";
 import { RefreshTokensModule } from "../refresh_tokens/refresh_tokens.module";
 import { DataAboutAccountsModule } from "../data_about_accounts/data_about_accounts.module";
+import { RolesModule } from "../roles/roles.module";
 
 @Module({
     providers: [AccountsService],
     controllers: [AccountsController],
     imports: [SequelizeModule.forFeature([Account]), forwardRef(() => AuthModule),
-        forwardRef(() => RefreshTokensModule), forwardRef(() => DataAboutAccountsModule)],
+        forwardRef(() => RefreshTokensModule), forwardRef(() => DataAboutAccountsModule),
+        forwardRef(() => RolesModule)],
     exports: [AccountsService]
 })
 export class AccountsModule {}
