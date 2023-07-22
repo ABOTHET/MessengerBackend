@@ -3,11 +3,13 @@ import { DataAboutAccount } from "./models/data_about_accounts.model";
 import { InjectModel } from "@nestjs/sequelize";
 import { IChangeDataAboutAccount } from "./dto/change_data_about_accounts.model";
 import { AccountsService } from "../accounts/accounts.service";
+import { AssetsService } from "../assets/assets.service";
 
 @Injectable()
 export class DataAboutAccountsService {
     constructor(@InjectModel(DataAboutAccount) private dataAboutAccountRepository: typeof DataAboutAccount,
-                @Inject(forwardRef(() => AccountsService)) private accountsService: AccountsService) {}
+                @Inject(forwardRef(() => AccountsService)) private accountsService: AccountsService,
+                private assetsService: AssetsService) {}
 
     async createDataAboutAccount(id: number) {
         await this.dataAboutAccountRepository.create({account_id: id});
@@ -15,7 +17,7 @@ export class DataAboutAccountsService {
 
     async changeDataAboutAccount(idAccount: number, dataAboutAccount: IChangeDataAboutAccount) {
         if (dataAboutAccount.city) {
-            const city = await this.accountsService.getCityById(Number(dataAboutAccount.city));
+            const city = this.assetsService.getCityById(Number(dataAboutAccount.city));
             if (!city) {
                 throw new HttpException("Такого города нет в списке", HttpStatus.BAD_REQUEST);
             }

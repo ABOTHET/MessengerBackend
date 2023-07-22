@@ -1,13 +1,21 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Observable } from 'rxjs';
 import { RefreshTokensService } from "../../refresh_tokens/refresh_tokens.service";
+import { Reflector } from "@nestjs/core";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
 
-  constructor(private refreshTokensService: RefreshTokensService) {}
+  constructor(private refreshTokensService: RefreshTokensService, private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext){
+
+    const isPublic = this.reflector.get<boolean>('public', context.getHandler());
+
+    if (isPublic) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     if (!token) {

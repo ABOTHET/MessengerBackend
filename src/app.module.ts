@@ -13,6 +13,10 @@ import { Role } from "./roles/model/roles.model";
 import { Relationship } from "./roles/model/relationship.model";
 import { RolesGuard } from "./guards/roles/roles.guard";
 import { APP_GUARD } from "@nestjs/core";
+import { AuthGuard } from "./guards/auth/auth.guard";
+import { AssetsModule } from './assets/assets.module';
+import { PostsModule } from './posts/posts.module';
+import { Post } from "./posts/models/posts.model";
 
 @Module({
     imports: [
@@ -27,7 +31,7 @@ import { APP_GUARD } from "@nestjs/core";
             username: process.env.POSTGRES_USER,
             password: process.env.POSTGRES_PASSWORD,
             database: process.env.POSTGRES_DB,
-            models: [Account, RefreshToken, DataAboutAccount, Role, Relationship],
+            models: [Account, RefreshToken, DataAboutAccount, Role, Relationship, Post],
             autoLoadModels: true,
             synchronize: true
         }),
@@ -35,10 +39,21 @@ import { APP_GUARD } from "@nestjs/core";
         RefreshTokensModule,
         AuthModule,
         DataAboutAccountsModule,
-        RolesModule
+        RolesModule,
+        AssetsModule,
+        PostsModule,
     ],
     controllers: [],
-    providers: []
+    providers: [
+        {
+            provide: APP_GUARD,
+            useClass: AuthGuard
+        },
+        {
+            provide: APP_GUARD,
+            useClass: RolesGuard
+        }
+    ]
 })
 export class AppModule {
 

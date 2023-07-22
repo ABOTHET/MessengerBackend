@@ -11,6 +11,13 @@ export class RolesGuard implements CanActivate {
     canActivate(
         context: ExecutionContext
     ): boolean | Promise<boolean> | Observable<boolean> {
+
+        const isPublic = this.reflector.get<boolean>('public', context.getHandler());
+
+        if (isPublic) {
+            return true;
+        }
+
         const roles = this.reflector.get<string[]>("roles", context.getHandler());
         if (!roles) {
             return true;

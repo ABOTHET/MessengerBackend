@@ -13,21 +13,11 @@ import { RolesService } from "../roles/roles.service";
 @Injectable()
 export class AccountsService {
 
-    cities;
-
     constructor(@InjectModel(Account) private accountRepository: typeof Account,
                 @Inject(forwardRef(() => AuthService)) private authService: AuthService,
                 @Inject(forwardRef(() => RefreshTokensService)) private refreshTokensService: RefreshTokensService,
                 @Inject(forwardRef(() => DataAboutAccountsService)) private dataAboutAccountsService: DataAboutAccountsService,
                 @Inject(forwardRef(() => RolesService)) private rolesService: RolesService) {}
-
-    async getCityById(id: number) {
-        if (!this.cities) {
-            const data = await fs.promises.readFile(`./src/assets/cities.json`, "utf-8");
-            this.cities = JSON.parse(Buffer.from(data).toString("utf8"));
-        }
-        return this.cities[id];
-    }
 
     async createAccount(createAccount: ICreateAccountDto) {
         const accountFromDB = await this.getAccountByPhone(createAccount.phone);
